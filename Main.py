@@ -4,6 +4,13 @@ Created on Mon Oct  9 15:19:36 2023
 https://docs.rocketpy.org/en/latest/user/first_simulation.html
 @author: power105
 """
+#todo 
+#organize
+#implement LOV-IV https://www.apogeerockets.com/Rocket_Kits/Skill_Level_3_Kits/LOC_IV#rocksim
+#implement DMS H100W-14A White Lightning
+
+
+
 import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight
 
@@ -160,8 +167,8 @@ import scipy.optimize as opt
 import scipy.interpolate as interp
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(60, 90, 10)  # 20 points between 80 and 90
-heading_values = np.linspace(0, 360, 20)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 25)  # 20 points between 80 and 90
+heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
@@ -181,14 +188,15 @@ if __name__ == '__main__':
         results_list = pool.map(evaluate_inclination, inclination_values)
     
     # Convert the list of arrays into a single 2D array
-    distance_from_rail_values = np.stack(results_list, axis=0)
+    distance_from_rail_values = np.stack(results_list, axis=1)
     
     # Create a meshgrid for plotting
-    heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)  # Swapped order
+    heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)
+
 
     # Create an interpolated function from the phase space data using RegularGridInterpolator
     interpolated_function = interp.RegularGridInterpolator(
-        (heading_values, inclination_values),  # Swapped order
+        (heading_values, inclination_values), 
         distance_from_rail_values, 
         method='cubic'
     )
@@ -199,20 +207,24 @@ if __name__ == '__main__':
 
     # Initial guess for optimization (middle of the parameter ranges)
     initial_guess = [(heading_values[0] + heading_values[-1]) / 2, (inclination_values[0] + inclination_values[-1]) / 2]
+    bounds=[(heading_values[0], heading_values[-1]), (inclination_values[0], inclination_values[-1])]
 
     # Optimize to find the minimum distance from rail
-    result = opt.minimize(objective, initial_guess, bounds=[(heading_values[0], heading_values[-1]), (inclination_values[0], inclination_values[-1])])  # Swapped order    
+    #result = opt.minimize(objective, initial_guess, bounds=bounds)
+    result = opt.differential_evolution(objective, bounds)
     
     # Extract the optimized parameters
     optimized_heading, optimized_inclination = result.x
     minimum_distance = result.fun
+
+
 
     print(f'Minimum distance from rail: {minimum_distance:.2f} meters at Heading: {optimized_heading:.2f} degrees, Inclination: {optimized_inclination:.2f} degrees')
     
     
     # Plot the phase space map
     plt.figure(figsize=(10, 8))
-    cp = plt.contourf(inclination_mesh, heading_mesh, distance_from_rail_values, cmap='viridis')
+    cp = plt.contourf(heading_mesh, inclination_mesh , np.transpose(distance_from_rail_values), cmap='viridis')
     plt.colorbar(cp, label='Distance from Rail (m)')
     plt.xlabel('Heading (degrees)')
     plt.ylabel('Inclination (degrees)')
