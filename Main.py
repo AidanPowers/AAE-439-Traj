@@ -184,12 +184,11 @@ if __name__ == '__main__':
     distance_from_rail_values = np.stack(results_list, axis=0)
     
     # Create a meshgrid for plotting
-    inclination_mesh, heading_mesh = np.meshgrid(heading_values, inclination_values)
-
+    heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)  # Swapped order
 
     # Create an interpolated function from the phase space data using RegularGridInterpolator
     interpolated_function = interp.RegularGridInterpolator(
-        (inclination_values, heading_values), 
+        (heading_values, inclination_values),  # Swapped order
         distance_from_rail_values, 
         method='cubic'
     )
@@ -202,7 +201,7 @@ if __name__ == '__main__':
     initial_guess = [(heading_values[0] + heading_values[-1]) / 2, (inclination_values[0] + inclination_values[-1]) / 2]
 
     # Optimize to find the minimum distance from rail
-    result = opt.minimize(objective, initial_guess, bounds=[(inclination_values[0], inclination_values[-1]), (heading_values[0], heading_values[-1])])
+    result = opt.minimize(objective, initial_guess, bounds=[(heading_values[0], heading_values[-1]), (inclination_values[0], inclination_values[-1])])  # Swapped order    
     
     # Extract the optimized parameters
     optimized_heading, optimized_inclination = result.x
