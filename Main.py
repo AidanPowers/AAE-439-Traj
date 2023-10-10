@@ -8,7 +8,7 @@ import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight
 
 
-env = Environment(latitude=32.990254, longitude=-106.974998, elevation=1400)
+env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
 
 import datetime
 
@@ -156,10 +156,12 @@ def simulate_flight(params):
 import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
+import scipy.optimize as opt
+import scipy.interpolate as interp
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(80, 90, 3)  # 20 points between 80 and 90
-heading_values = np.linspace(0, 360, 5)  # 36 points between 0 and 360
+inclination_values = np.linspace(60, 90, 10)  # 20 points between 80 and 90
+heading_values = np.linspace(0, 360, 20)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
@@ -183,6 +185,31 @@ if __name__ == '__main__':
     
     # Create a meshgrid for plotting
     inclination_mesh, heading_mesh = np.meshgrid(heading_values, inclination_values)
+
+
+    # Create an interpolated function from the phase space data using RegularGridInterpolator
+    interpolated_function = interp.RegularGridInterpolator(
+        (inclination_values, heading_values), 
+        distance_from_rail_values, 
+        method='cubic'
+    )
+
+    def objective(params):
+        # Objective function to be minimized
+        return interpolated_function(params)
+
+    # Initial guess for optimization (middle of the parameter ranges)
+    initial_guess = [(heading_values[0] + heading_values[-1]) / 2, (inclination_values[0] + inclination_values[-1]) / 2]
+
+    # Optimize to find the minimum distance from rail
+    result = opt.minimize(objective, initial_guess, bounds=[(inclination_values[0], inclination_values[-1]), (heading_values[0], heading_values[-1])])
+    
+    # Extract the optimized parameters
+    optimized_heading, optimized_inclination = result.x
+    minimum_distance = result.fun
+
+    print(f'Minimum distance from rail: {minimum_distance:.2f} meters at Heading: {optimized_heading:.2f} degrees, Inclination: {optimized_inclination:.2f} degrees')
+    
     
     # Plot the phase space map
     plt.figure(figsize=(10, 8))
@@ -192,3 +219,4 @@ if __name__ == '__main__':
     plt.ylabel('Inclination (degrees)')
     plt.title('Phase Space Map')
     plt.show()
+    
