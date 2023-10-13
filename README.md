@@ -1,14 +1,10 @@
 # AAE-439-Traj
 
-In progress code for AAE-439 grad group.
-
-Heavily based on https://docs.rocketpy.org/en/latest/user/first_simulation.html with some advice from GPT-4
-
-Creates a Phase Space map inspired by https://www.youtube.com/watch?v=b-pLRX3L-fg
-
-Finds the minimum point in the phase space approximation
-
-Phase space map generation is parallelized. Run code in annaconda prompt to see printed output.
+In progress code for AAE-439 grad group. \
+Heavily based on https://docs.rocketpy.org/en/latest/user/first_simulation.html with some advice from GPT-4 \
+Creates a Phase Space map inspired by https://www.youtube.com/watch?v=b-pLRX3L-fg \
+Finds the minimum point in the phase space approximation \
+Phase space map generation is parallelized. Run code in annaconda prompt to see printed output. \
 
 
 
