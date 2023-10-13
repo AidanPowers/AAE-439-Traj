@@ -4,33 +4,33 @@ Created on Mon Oct  9 15:19:36 2023
 https://docs.rocketpy.org/en/latest/user/first_simulation.html
 @author: power105
 """
-#todo 
-#organize
-#implement LOV-IV https://www.apogeerockets.com/Rocket_Kits/Skill_Level_3_Kits/LOC_IV#rocksim
-#implement DMS H100W-14A White Lightning
 
-
-
+# Import necessary libraries and modules
 import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight
-
-
-env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
-
 import datetime
 
+# Define environmental conditions for the launch
+env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
+
+# Get tomorrow's date
 tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
+# Set the environment's date to tomorrow at 12:00 UTC
 env.set_date(
     (tomorrow.year, tomorrow.month, tomorrow.day, 12)
 )  # Hour given in UTC time
 
+# Set the atmospheric model to be used, based on a forecast file
 env.set_atmospheric_model(type="Forecast", file="GFS")
 
+# Uncomment to print environment information
 #print(env.info())
 
+# Resolve the current directory path and convert it to a string
 fileLoc = str(pathlib.Path().resolve())
 
+# Create a solid motor object with specified properties and data file
 Pro75M1670 = SolidMotor(
     thrust_source=fileLoc + "/data/motors/Cesaroni_M1670.eng",
     dry_mass=1.815,
@@ -50,9 +50,10 @@ Pro75M1670 = SolidMotor(
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
 
-
+# Uncomment to print motor information
 #print(Pro75M1670.info())
 
+# Create a rocket object with specified properties and drag curves
 calisto = Rocket(
     radius=127 / 2000,
     mass=14.426,
@@ -63,18 +64,22 @@ calisto = Rocket(
     coordinate_system_orientation="tail_to_nose",
 )
 
+# Add the solid motor to the rocket at a specified position
 calisto.add_motor(Pro75M1670, position=-1.255)
 
+# Set the positions of the rail buttons on the rocket
 rail_buttons = calisto.set_rail_buttons(
     upper_button_position=0.0818,
     lower_button_position=-0.6182,
     angular_position=45,
 )
 
+# Add a nose cone to the rocket
 nose_cone = calisto.add_nose(
     length=0.55829, kind="von karman", position=1.278
 )
 
+# Add a set of trapezoidal fins to the rocket
 fin_set = calisto.add_trapezoidal_fins(
     n=4,
     root_chord=0.120,
@@ -85,11 +90,13 @@ fin_set = calisto.add_trapezoidal_fins(
     airfoil=(fileLoc + "/data/calisto/NACA0012-radians.csv","radians"),
 )
 
+# Add a tail section to the rocket
 tail = calisto.add_tail(
     top_radius=0.0635, bottom_radius=0.0435, length=0.060, position=-1.194656
 )
 
 
+# Add a main parachute to the rocket, with a specified deployment condition
 main = calisto.add_parachute(
     name="main",
     cd_s=10.0,
@@ -99,6 +106,7 @@ main = calisto.add_parachute(
     noise=(0, 8.3, 0.5),
 )
 
+# Add a drogue parachute to the rocket, with a specified deployment condition
 drogue = calisto.add_parachute(
     name="drogue",
     cd_s=1.0,
@@ -108,15 +116,21 @@ drogue = calisto.add_parachute(
     noise=(0, 8.3, 0.5),
 )
 
-#print(calisto.plots.static_margin())
 
+# Uncomment to plot and print the rocket's static margin
+# print(calisto.plots.static_margin())
+
+# Uncomment to create a Flight object to simulate a rocket flight
 # test_flight = Flight(
 #     rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0
 #     )
 
-#print(test_flight.all_info())
+# Uncomment to print all information about the simulated flight
+# print(test_flight.all_info())
 
+# Notify that setup is complete
 print("setup complete")
+
 
 import scipy.optimize as opt
 import numpy as np
@@ -140,25 +154,6 @@ def simulate_flight(params):
     
     return distance_from_rail
 
-# # Define bounds for the launch parameters
-# bounds = [(80, 90),  # bounds for inclination
-#           (0, 360)]  # bounds for heading
-
-# # Perform parallelized optimization using differential evolution
-# optimized_result = opt.differential_evolution(simulate_flight, bounds, workers=-1, updating='deferred')
-
-# # The optimized inclination and heading are now in optimized_result.x
-# optimized_inclination, optimized_heading = optimized_result.x
-
-# # Now simulate the optimized flight to verify
-# optimized_flight = Flight(
-#     rocket=calisto,
-#     environment=env,
-#     rail_length=5.2,
-#     inclination=optimized_inclination,
-#     heading=optimized_heading
-# )
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -167,7 +162,7 @@ import scipy.optimize as opt
 import scipy.interpolate as interp
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 25)  # 20 points between 80 and 90
+inclination_values = np.linspace(40, 90, 25)  # 25 points between 40 and 90
 heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
