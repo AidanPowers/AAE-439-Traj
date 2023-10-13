@@ -6,7 +6,7 @@ Created on Mon Oct  9 20:10:11 2023
 """
 
 import pathlib
-from rocketpy import Environment, SolidMotor, Rocket, Flight
+from rocketpy import Environment, SolidMotor, Rocket, Flight, plots
 import netCDF4
 
 env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
@@ -45,7 +45,7 @@ Pro75M1670 = SolidMotor(
 )
 
 
-#print(Pro75M1670.info())
+print(Pro75M1670.info())
 
 calisto = Rocket(
     radius=127 / 2000,
@@ -84,28 +84,69 @@ tail = calisto.add_tail(
 )
 
 
+def fake_trigger(p, h, y):
+    # activate main when vz < 0 m/s and z < 800 m
+    return True if h > 0 else False
+
+main = calisto.add_parachute(
+    name="false",
+    cd_s=0,
+    trigger="apogee",      # ejection altitude in meters
+    sampling_rate=105,
+    lag=1.5,
+    noise=(0, 8.3, 0.5),
+)
+
+# drogue = calisto.add_parachute(
+#     name="drogue",
+#     cd_s=1.0,
+#     trigger="apogee",  # ejection at apogee
+#     sampling_rate=105,
+#     lag=1.5,
+#     noise=(0, 8.3, 0.5),
+# )
+
+print(calisto.plots.static_margin())
+
+flight_phase1 = Flight(
+    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0 , max_time=30, max_time_step = 1
+    )
+
+print(flight_phase1.all_info())
+print("phase 1 complete")
+
+burnout_t = 10
+
+initial_solution = [
+    burnout_t,
+    flight_phase1.x(burnout_t), flight_phase1.y(burnout_t), flight_phase1.z(burnout_t),
+    flight_phase1.vx(burnout_t), flight_phase1.vy(burnout_t), flight_phase1.vz(burnout_t),
+    flight_phase1.e0(burnout_t), flight_phase1.e1(burnout_t), flight_phase1.e2(burnout_t), flight_phase1.e3(burnout_t),
+    flight_phase1.w1(burnout_t), flight_phase1.w2(burnout_t), flight_phase1.w3(burnout_t)
+]
+
+
+def main_trigger(p, h, y):
+    # activate main when vz < 0 m/s and z < 800 m
+    return True
+
 main = calisto.add_parachute(
     name="main",
     cd_s=10.0,
-    trigger=800,      # ejection altitude in meters
+    trigger=main_trigger,      # ejection altitude in meters
     sampling_rate=105,
     lag=1.5,
     noise=(0, 8.3, 0.5),
 )
 
-drogue = calisto.add_parachute(
-    name="drogue",
-    cd_s=1.0,
-    trigger="apogee",  # ejection at apogee
-    sampling_rate=105,
-    lag=1.5,
-    noise=(0, 8.3, 0.5),
-)
+flight_phase2 = Flight(
+    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0, initial_solution=initial_solution
+    )
 
-#print(calisto.plots.static_margin())
+#print(flight_phase2.info())
 
-# test_flight = Flight(
-#     rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0
-#     )
+#flight_phase2.trajectory_3d.plot()
 
-#print(test_flight.all_info())
+
+
+
