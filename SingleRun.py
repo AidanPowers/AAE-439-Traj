@@ -113,7 +113,7 @@ burnout_t = 10
 
 #print(calisto.plots.static_margin())
 
-#first flight, set up for complete analysis results is the smae if max_time is set, and passed on
+#first flight, result is the same if I run the entire flight, and then pick out a time using the matrix.
 flight_phase1 = Flight(
     rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0 , max_time=burnout_t, max_time_step = .1
     )
