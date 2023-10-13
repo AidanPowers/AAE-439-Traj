@@ -83,11 +83,13 @@ tail = calisto.add_tail(
     top_radius=0.0635, bottom_radius=0.0435, length=0.060, position=-1.194656
 )
 
-
+#unused
 def fake_trigger(p, h, y):
     # activate main when vz < 0 m/s and z < 800 m
     return True if h > 0 else False
 
+
+#adds a zero drag chute to move into the parahute phase
 main = calisto.add_parachute(
     name="false",
     cd_s=0,
@@ -106,46 +108,53 @@ main = calisto.add_parachute(
 #     noise=(0, 8.3, 0.5),
 # )
 
-print(calisto.plots.static_margin())
+#time of parahute charge (name from old)
+burnout_t = 10
 
+#print(calisto.plots.static_margin())
+
+#first flight, set up for complete analysis results is the smae if max_time is set, and passed on
 flight_phase1 = Flight(
-    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0 , max_time=30, max_time_step = 1
+    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0 , max_time=burnout_t, max_time_step = .1
     )
 
 print(flight_phase1.all_info())
 print("phase 1 complete")
 
-burnout_t = 10
+#creates the state matrix for the second phase
+# initial_solution = [
+#     burnout_t,
+#     flight_phase1.x(burnout_t), flight_phase1.y(burnout_t), flight_phase1.z(burnout_t),
+#     flight_phase1.vx(burnout_t), flight_phase1.vy(burnout_t), flight_phase1.vz(burnout_t),
+#     flight_phase1.e0(burnout_t), flight_phase1.e1(burnout_t), flight_phase1.e2(burnout_t), flight_phase1.e3(burnout_t),
+#     flight_phase1.w1(burnout_t), flight_phase1.w2(burnout_t), flight_phase1.w3(burnout_t)
+# ]
 
-initial_solution = [
-    burnout_t,
-    flight_phase1.x(burnout_t), flight_phase1.y(burnout_t), flight_phase1.z(burnout_t),
-    flight_phase1.vx(burnout_t), flight_phase1.vy(burnout_t), flight_phase1.vz(burnout_t),
-    flight_phase1.e0(burnout_t), flight_phase1.e1(burnout_t), flight_phase1.e2(burnout_t), flight_phase1.e3(burnout_t),
-    flight_phase1.w1(burnout_t), flight_phase1.w2(burnout_t), flight_phase1.w3(burnout_t)
-]
-
-
+#trigger ASAP
 def main_trigger(p, h, y):
     # activate main when vz < 0 m/s and z < 800 m
     return True
 
+
 main = calisto.add_parachute(
     name="main",
-    cd_s=10.0,
+    cd_s=1.0,
     trigger=main_trigger,      # ejection altitude in meters
     sampling_rate=105,
-    lag=1.5,
+    lag=1.5, 
     noise=(0, 8.3, 0.5),
 )
 
+#simulate a chute only flight
 flight_phase2 = Flight(
-    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0, initial_solution=initial_solution
+    rocket=calisto, environment=env, rail_length=5.2, inclination=85, heading=0, initial_solution=flight_phase1 #,max_time_step = .1
     )
 
 #print(flight_phase2.info())
 
 #flight_phase2.trajectory_3d.plot()
+flight_phase2.plots.trajectory_3d()
+
 
 
 
