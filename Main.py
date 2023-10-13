@@ -2,13 +2,14 @@
 """
 Created on Mon Oct  9 15:19:36 2023
 https://docs.rocketpy.org/en/latest/user/first_simulation.html
-@author: power105
+@author: AidanPowers
 """
 
 # Import necessary libraries and modules
 import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight
 import datetime
+import copy
 
 # Define environmental conditions for the launch
 env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
@@ -49,6 +50,8 @@ Pro75M1670 = SolidMotor(
     throat_radius=11 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
+deploy_charge_time = 10
+
 
 # Uncomment to print motor information
 #print(Pro75M1670.info())
@@ -96,26 +99,22 @@ tail = calisto.add_tail(
 )
 
 
-# Add a main parachute to the rocket, with a specified deployment condition
-main = calisto.add_parachute(
+
+#define main parachute on duplicate rocket
+
+def main_trigger(p, h, y):
+    # activate main when vz < 0 m/s and z < 800 m
+    return True
+calisto_chute = copy.deepcopy(calisto)
+main = calisto_chute.add_parachute(
     name="main",
     cd_s=10.0,
-    trigger=800,      # ejection altitude in meters
+    trigger=main_trigger,      # ejection altitude in meters
     sampling_rate=105,
     lag=1.5,
-    noise=(0, 8.3, 0.5),
-)
+    noise=(0, 8.3, 0.5)
 
-# Add a drogue parachute to the rocket, with a specified deployment condition
-drogue = calisto.add_parachute(
-    name="drogue",
-    cd_s=1.0,
-    trigger="apogee",  # ejection at apogee
-    sampling_rate=105,
-    lag=1.5,
-    noise=(0, 8.3, 0.5),
 )
-
 
 # Uncomment to plot and print the rocket's static margin
 # print(calisto.plots.static_margin())
@@ -135,15 +134,32 @@ print("setup complete")
 import scipy.optimize as opt
 import numpy as np
 
+
 def simulate_flight(params):
     inclination, heading = params
-    test_flight = Flight(
+    
+    #flight pre parachute deploy
+    phase1_flight = Flight(
         rocket=calisto,
         environment=env,
         rail_length=5.2,
         inclination=inclination,
-        heading=heading
+        heading=heading,
+        max_time=deploy_charge_time,
+        max_time_step = .1
     )
+    
+    #flight post parachute deploy
+    test_flight = Flight(
+        rocket=calisto_chute,
+        environment=env,
+        rail_length=5.2,
+        inclination=inclination,
+        heading=heading,
+        initial_solution=phase1_flight
+        
+    )
+    
     
     launch_position = np.array([0, 0])
     landing_position = np.array([test_flight.x_impact, test_flight.y_impact])

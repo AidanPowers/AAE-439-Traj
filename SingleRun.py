@@ -9,9 +9,10 @@ import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight, plots
 import netCDF4
 
-env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
-
 import datetime
+
+
+env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
 
 tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
@@ -154,6 +155,8 @@ flight_phase2 = Flight(
 
 #flight_phase2.trajectory_3d.plot()
 flight_phase2.plots.trajectory_3d()
+flight.prints.impact_conditions()
+
 
 
 
