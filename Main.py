@@ -32,22 +32,22 @@ env.set_atmospheric_model(type="Forecast", file="GFS")
 fileLoc = str(pathlib.Path().resolve())
 
 # Create a solid motor object with specified properties and data file
-Pro75M1670 = SolidMotor(
+DMS_H100W_14A = SolidMotor(
     thrust_source=fileLoc + "/data/motors/Cesaroni_M1670.eng",
-    dry_mass=1.815,
+    dry_mass=.154,
     dry_inertia=(0.125, 0.125, 0.002),
-    nozzle_radius=33 / 1000,
-    grain_number=5,
+    nozzle_radius=10.5 / 2 / 1000,
+    grain_number=1,
     grain_density=1815,
     grain_outer_radius=33 / 1000,
-    grain_initial_inner_radius=15 / 1000,
-    grain_initial_height=120 / 1000,
-    grain_separation=5 / 1000,
+    grain_initial_inner_radius=5 / 2 / 1000,
+    grain_initial_height=140 / 1000,
+    grain_separation=0 / 1000,
     grains_center_of_mass_position=0.397,
     center_of_dry_mass_position=0.317,
     nozzle_position=0,
     burn_time=3.9,
-    throat_radius=11 / 1000,
+    throat_radius=5 / 2 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
 deploy_charge_time = 10
@@ -228,10 +228,7 @@ if __name__ == '__main__':
     optimized_heading, optimized_inclination = result.x
     minimum_distance = result.fun
 
-
-
     print(f'Minimum distance from rail: {minimum_distance:.2f} meters at Heading: {optimized_heading:.2f} degrees, Inclination: {optimized_inclination:.2f} degrees')
-    
     
     # Plot the phase space map
     plt.figure(figsize=(10, 8))
