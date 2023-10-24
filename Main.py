@@ -19,7 +19,7 @@ tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
 # Set the environment's date to tomorrow at 12:00 UTC
 env.set_date(
-    (tomorrow.year, tomorrow.month, tomorrow.day, 12)
+    (2023, 10, 28, 12)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
 )  # Hour given in UTC time
 
 # Set the atmospheric model to be used, based on a forecast file
@@ -33,70 +33,69 @@ fileLoc = str(pathlib.Path().resolve())
 
 # Create a solid motor object with specified properties and data file
 DMS_H100W_14A = SolidMotor(
-    thrust_source=fileLoc + "/data/motors/Cesaroni_M1670.eng",
+    thrust_source=fileLoc + "/DMS_H100W_14A.csv",
+    #thrust_source=120,
     dry_mass=.154,
-    dry_inertia=(0.125, 0.125, 0.002),
+    dry_inertia=(0.0125, 0.0125, 0.0002),
     nozzle_radius=10.5 / 2 / 1000,
     grain_number=1,
-    grain_density=1815,
-    grain_outer_radius=33 / 1000,
-    grain_initial_inner_radius=5 / 2 / 1000,
+    grain_density=1820.26,
+    grain_outer_radius=33/ 2 / 1000,
+    grain_initial_inner_radius=22 / 2 / 1000,
     grain_initial_height=140 / 1000,
     grain_separation=0 / 1000,
-    grains_center_of_mass_position=0.397,
-    center_of_dry_mass_position=0.317,
+    grains_center_of_mass_position=0.076,
+    center_of_dry_mass_position=0.076,
     nozzle_position=0,
-    burn_time=3.9,
+    burn_time=2.4,
     throat_radius=5 / 2 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
-deploy_charge_time = 10
+deploy_charge_time = 15
 
 
 # Uncomment to print motor information
 #print(Pro75M1670.info())
 
 # Create a rocket object with specified properties and drag curves
-calisto = Rocket(
-    radius=10.2/100,
-    mass=1022,
-    inertia=(6.321, 6.321, 0.034),
-    power_off_drag=fileLoc + "PowerOff.csv",
-    power_on_drag=fileLoc + "/PowerOn.csv",
-    center_of_mass_without_motor=0,
-    coordinate_system_orientation="tail_to_nose",
+loc_iv = Rocket(
+    radius=10.2/100/2,
+    mass=1.022,
+    inertia=(.11675, .11675, .0028950),
+    power_off_drag=fileLoc + "//PowerOff.csv",
+    power_on_drag=fileLoc + "//PowerOn.csv",
+    center_of_mass_without_motor=0.76,
+    coordinate_system_orientation="nose_to_tail",
 )
 
 # Add the solid motor to the rocket at a specified position
-calisto.add_motor(DMS_H100W_14A, position=-1.255)
+loc_iv.add_motor(DMS_H100W_14A, position=1.19)
 
 # Set the positions of the rail buttons on the rocket
-rail_buttons = calisto.set_rail_buttons(
-    upper_button_position=0.0818,
-    lower_button_position=-0.6182,
+rail_buttons = loc_iv.set_rail_buttons(
+    upper_button_position=0.6418,
+    lower_button_position=1.0182,
     angular_position=45,
 )
 
 # Add a nose cone to the rocket
-nose_cone = calisto.add_nose(
-    length=0.55829, kind="von karman", position=1.278
+nose_cone = loc_iv.add_nose(
+    length=0.325, kind="ogive", position=0
 )
 
 # Add a set of trapezoidal fins to the rocket
-fin_set = calisto.add_trapezoidal_fins(
-    n=4,
-    root_chord=0.120,
-    tip_chord=0.060,
-    span=0.110,
-    position=-1.04956,
-    cant_angle=0.5,
-    airfoil=(fileLoc + "/data/calisto/NACA0012-radians.csv","radians"),
+fin_set = loc_iv.add_trapezoidal_fins(
+    n=3,
+    root_chord=0.171,
+    tip_chord=0.063,
+    span=0.1080,
+    position=1.02,
+    cant_angle=0,
+    sweep_length=0.143 
+    #airfoil=(fileLoc + "/data/calisto/NACA0012-radians.csv","radians"),
 )
 
-# Add a tail section to the rocket
-tail = calisto.add_tail(
-    top_radius=0.0635, bottom_radius=0.0435, length=0.060, position=-1.194656
-)
+
 
 
 
@@ -105,13 +104,13 @@ tail = calisto.add_tail(
 def main_trigger(p, h, y):
     # activate main when vz < 0 m/s and z < 800 m
     return True
-calisto_chute = copy.deepcopy(calisto)
-main = calisto_chute.add_parachute(
+loc_iv_chute = copy.deepcopy(loc_iv)
+main = loc_iv_chute.add_parachute(
     name="main",
-    cd_s=10.0,
+    cd_s=0.80,
     trigger=main_trigger,      # ejection altitude in meters
     sampling_rate=105,
-    lag=1.5,
+    lag=0,
     noise=(0, 8.3, 0.5)
 
 )
@@ -140,7 +139,7 @@ def simulate_flight(params):
     
     #flight pre parachute deploy
     phase1_flight = Flight(
-        rocket=calisto,
+        rocket=loc_iv,
         environment=env,
         rail_length=5.2,
         inclination=inclination,
@@ -151,7 +150,7 @@ def simulate_flight(params):
     
     #flight post parachute deploy
     test_flight = Flight(
-        rocket=calisto_chute,
+        rocket=loc_iv_chute,
         environment=env,
         rail_length=5.2,
         inclination=inclination,
@@ -178,8 +177,8 @@ import scipy.optimize as opt
 import scipy.interpolate as interp
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 25)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 4)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 4)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))

@@ -28,8 +28,8 @@ fileLoc = str(pathlib.Path().resolve())
 
 # Create a solid motor object with specified properties and data file
 DMS_H100W_14A = SolidMotor(
-    #thrust_source=fileLoc + "/DMS_H100W_14A.csv",
-    thrust_source=120,
+    thrust_source=fileLoc + "/DMS_H100W_14A.csv",
+    #thrust_source=120,
     dry_mass=.154,
     dry_inertia=(0.0125, 0.0125, 0.0002),
     nozzle_radius=10.5 / 2 / 1000,
