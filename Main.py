@@ -183,9 +183,12 @@ def simulate_flight(params):
 
 import numpy as np
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import scipy.optimize as opt
 import scipy.interpolate as interp
+
+# Get the number of cores (not threads)
+num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
 inclination_values = np.linspace(40, 90, 25)  # 25 points between 40 and 90
@@ -204,7 +207,7 @@ def evaluate_inclination(inclination):
 
 if __name__ == '__main__':
     # Use a Pool of workers to parallelize the outer loop
-    with Pool() as pool:
+    with Pool(processes=num_cores) as pool:
         # The results will be a list of arrays, one array for each inclination value
         results_list = pool.map(evaluate_inclination, inclination_values)
     
