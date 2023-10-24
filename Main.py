@@ -96,7 +96,8 @@ fin_set = loc_iv.add_trapezoidal_fins(
 )
 
 
-
+# print(loc_iv.plots.static_margin())
+# print(loc_iv.all_info())
 
 
 #define main parachute on duplicate rocket
@@ -144,9 +145,19 @@ def simulate_flight(params):
         rail_length=5.2,
         inclination=inclination,
         heading=heading,
-        max_time=deploy_charge_time,
-        max_time_step = .1
+        #max_time=deploy_charge_time,
+        max_time_step = .1,
+        verbose = True
     )
+    
+    initial_solution = [
+        deploy_charge_time,
+        phase1_flight.x(deploy_charge_time), phase1_flight.y(deploy_charge_time), phase1_flight.z(deploy_charge_time),
+        phase1_flight.vx(deploy_charge_time), phase1_flight.vy(deploy_charge_time), phase1_flight.vz(deploy_charge_time),
+        phase1_flight.e0(deploy_charge_time), phase1_flight.e1(deploy_charge_time), phase1_flight.e2(deploy_charge_time), phase1_flight.e3(deploy_charge_time),
+        phase1_flight.w1(deploy_charge_time), phase1_flight.w2(deploy_charge_time), phase1_flight.w3(deploy_charge_time)
+    ]
+    
     
     #flight post parachute deploy
     test_flight = Flight(
@@ -155,7 +166,7 @@ def simulate_flight(params):
         rail_length=5.2,
         inclination=inclination,
         heading=heading,
-        initial_solution=phase1_flight
+        initial_solution=initial_solution
         
     )
     
@@ -177,8 +188,8 @@ import scipy.optimize as opt
 import scipy.interpolate as interp
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 4)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 4)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 25)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
