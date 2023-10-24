@@ -146,8 +146,8 @@ def simulate_flight(params):
         inclination=inclination,
         heading=heading,
         #max_time=deploy_charge_time,
-        max_time_step = .1,
-        verbose = True
+        max_time_step = .1
+        #verbose = True
     )
     
     initial_solution = [
