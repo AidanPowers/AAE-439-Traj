@@ -58,17 +58,17 @@ deploy_charge_time = 10
 
 # Create a rocket object with specified properties and drag curves
 calisto = Rocket(
-    radius=127 / 2000,
-    mass=14.426,
+    radius=10.2/100,
+    mass=1022,
     inertia=(6.321, 6.321, 0.034),
-    power_off_drag=fileLoc + "/data/calisto/powerOffDragCurve.csv",
-    power_on_drag=fileLoc + "/data/calisto/powerOnDragCurve.csv",
+    power_off_drag=fileLoc + "PowerOff.csv",
+    power_on_drag=fileLoc + "/PowerOn.csv",
     center_of_mass_without_motor=0,
     coordinate_system_orientation="tail_to_nose",
 )
 
 # Add the solid motor to the rocket at a specified position
-calisto.add_motor(Pro75M1670, position=-1.255)
+calisto.add_motor(DMS_H100W_14A, position=-1.255)
 
 # Set the positions of the rail buttons on the rocket
 rail_buttons = calisto.set_rail_buttons(
