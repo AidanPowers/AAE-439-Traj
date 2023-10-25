@@ -191,8 +191,8 @@ import scipy.interpolate as interp
 num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 25)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 4)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 4)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
@@ -204,6 +204,34 @@ def evaluate_inclination(inclination):
         params = [inclination, heading]
         results[j] = simulate_flight(params)
     return results
+
+def plot_distance_from_rail(constant_heading, interpolated_function):
+    # Ensure headings wrap around at 0 and 360 degrees
+    headings = [(constant_heading + 360) % 360, 
+                (constant_heading + 5 + 360) % 360, 
+                (constant_heading - 5 + 360) % 360]
+
+    plt.figure(figsize=(10, 8))
+
+    for heading in headings:
+        # Create arrays to hold the inclination values and corresponding distances
+        inclinations = np.linspace(40, 90, 25)
+        distances = np.empty_like(inclinations)
+        
+        # Evaluate the interpolated function for each inclination at the current heading
+        for i, inclination in enumerate(inclinations):
+            params = np.array([heading, inclination])
+            distances[i] = interpolated_function(params)
+        
+        # Plot the distances for this heading
+        plt.plot(inclinations, distances, label=f'Heading {heading}°')
+    
+    plt.xlabel('Inclination (degrees)')
+    plt.ylabel('Distance from Rail (m)')
+    plt.title(f'Distance from Rail at Heading {constant_heading}° and ±5°')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 if __name__ == '__main__':
     # Use a Pool of workers to parallelize the outer loop
@@ -251,4 +279,6 @@ if __name__ == '__main__':
     plt.ylabel('Inclination (degrees)')
     plt.title('Phase Space Map')
     plt.show()
+    
+    plot_distance_from_rail(90, interpolated_function)
     
