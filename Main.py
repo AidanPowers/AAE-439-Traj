@@ -183,49 +183,48 @@ def simulate_flight(params):
 
 import numpy as np
 import matplotlib.pyplot as plt
-from multiprocessing import Pool, cpu_count
 import scipy.optimize as opt
 import scipy.interpolate as interp
 
-# Get the number of cores (not threads)
-num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
+def fibonacci_lattice_samples(num_samples, min_inclination):
+    phi = (1 + np.sqrt(5)) / 2  # golden ratio
+    golden_angle = 2 * np.pi * (1 - 1 / phi)  # golden angle
 
-# Define the range of values for each parameter
-inclination_values = np.linspace(60, 90, 4)  # 15 points between 60 and 90
-heading_values = np.linspace(0, 360, 8)  # 36 points between 0 and 360
+    points = []
+    for i in range(num_samples):
+        y = 1 - (i / (num_samples - 1))  # y-coordinate in [-1, 1]
+        theta = np.arccos(y)  # ranging from 0 to pi
+        phi = (i * golden_angle) % (2 * np.pi)  # ranging from 0 to 2*pi, wrapped around
 
-# Create an empty array to hold the objective function values
-distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
+        # Filtering out points outside the cap bounded by min_inclination
+        if np.degrees(theta) >= min_inclination:
+            points.append((np.degrees(theta), np.degrees(phi)))
 
-def evaluate_inclination(inclination):
-    # Evaluate the objective function over all heading values for a given inclination
-    results = np.empty(len(heading_values))
-    for j, heading in enumerate(heading_values):
-        params = [inclination, heading]
-        results[j] = simulate_flight(params)
-    return results
+    return np.array(points)  # returning theta (inclination) and phi (heading) in degrees
 
-def plot_distance_from_rail(constant_heading, interpolated_function):
+
+def evaluate_point(params):
+    inclination, heading = params
+    result = simulate_flight([inclination, heading])
+    print(f'Evaluated point ({inclination}, {heading}): {result}')
+    return result
+
+def plot_distance_from_rail(constant_heading, interpolated_function, samples):
+    plt.figure(figsize=(10, 8))
+
     # Ensure headings wrap around at 0 and 360 degrees
     headings = [(constant_heading + 360) % 360, 
                 (constant_heading + 5 + 360) % 360, 
                 (constant_heading - 5 + 360) % 360]
 
-    plt.figure(figsize=(10, 8))
-
     for heading in headings:
-        # Create arrays to hold the inclination values and corresponding distances
-        inclinations = np.linspace(60, 90, 25)
-        distances = np.empty_like(inclinations)
-        
-        # Evaluate the interpolated function for each inclination at the current heading
-        for i, inclination in enumerate(inclinations):
-            params = np.array([heading, inclination])
-            distances[i] = interpolated_function(params)
-        
+        # Filter samples by heading
+        inclinations = samples[samples[:, 1] == heading][:, 0]
+        distances = np.array([interpolated_function([inc, heading]) for inc in inclinations])
+
         # Plot the distances for this heading
         plt.plot(inclinations, distances, label=f'Heading {heading}°')
-    
+
     plt.xlabel('Inclination (degrees)')
     plt.ylabel('Distance from Rail (m)')
     plt.title(f'Distance from Rail at Heading {constant_heading}° and ±5°')
@@ -234,51 +233,46 @@ def plot_distance_from_rail(constant_heading, interpolated_function):
     plt.show()
 
 if __name__ == '__main__':
-    # Use a Pool of workers to parallelize the outer loop
-    with Pool(processes=num_cores) as pool:
-        # The results will be a list of arrays, one array for each inclination value
-        results_list = pool.map(evaluate_inclination, inclination_values)
-    
-    # Convert the list of arrays into a single 2D array
-    distance_from_rail_values = np.stack(results_list, axis=1)
-    
-    # Create a meshgrid for plotting
-    heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)
+    # Specify the number of samples and the minimum inclination
+    num_samples = 100
+    min_inclination = 60
+    samples = fibonacci_lattice_samples(num_samples, min_inclination)
+    print(f'Generated {len(samples)} sample points.')
 
-
-    # Create an interpolated function from the phase space data using RegularGridInterpolator
-    interpolated_function = interp.RegularGridInterpolator(
-        (heading_values, inclination_values), 
-        distance_from_rail_values, 
-        method='cubic'
-    )
+    distance_from_rail_values = np.array([evaluate_point(point) for point in samples])
+    
+    # Create an interpolated function from the scattered data using griddata
+    interpolated_function = lambda params: interp.griddata(
+        samples, distance_from_rail_values, [params], method='cubic'
+    )[0]
 
     def objective(params):
         # Objective function to be minimized
         return interpolated_function(params)
 
     # Initial guess for optimization (middle of the parameter ranges)
-    initial_guess = [(heading_values[0] + heading_values[-1]) / 2, (inclination_values[0] + inclination_values[-1]) / 2]
-    bounds=[(heading_values[0], heading_values[-1]), (inclination_values[0], inclination_values[-1])]
+    initial_guess = [np.mean(samples[:, 0]), np.mean(samples[:, 1])]
+    bounds = [(min_inclination, 90), (0, 360)]
 
     # Optimize to find the minimum distance from rail
-    #result = opt.minimize(objective, initial_guess, bounds=bounds)
     result = opt.differential_evolution(objective, bounds)
     
     # Extract the optimized parameters
-    optimized_heading, optimized_inclination = result.x
+    optimized_inclination, optimized_heading = result.x
     minimum_distance = result.fun
 
     print(f'Minimum distance from rail: {minimum_distance:.2f} meters at Heading: {optimized_heading:.2f} degrees, Inclination: {optimized_inclination:.2f} degrees')
     
     # Plot the phase space map
     plt.figure(figsize=(10, 8))
-    cp = plt.contourf(heading_mesh, inclination_mesh , np.transpose(distance_from_rail_values), cmap='viridis')
-    plt.colorbar(cp, label='Distance from Rail (m)')
+    plt.scatter(samples[:, 1], samples[:, 0], c=distance_from_rail_values, cmap='viridis')
+    plt.colorbar(label='Distance from Rail (m)')
     plt.xlabel('Heading (degrees)')
     plt.ylabel('Inclination (degrees)')
     plt.title('Phase Space Map')
+    plt.grid(True)
     plt.show()
     
-    plot_distance_from_rail(350, interpolated_function)
+    plot_distance_from_rail(350, interpolated_function, samples)
+
     
