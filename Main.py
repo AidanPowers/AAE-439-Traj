@@ -234,7 +234,7 @@ def plot_distance_from_rail(constant_heading, interpolated_function, samples):
 
 if __name__ == '__main__':
     # Specify the number of samples and the minimum inclination
-    num_samples = 100
+    num_samples = 24
     min_inclination = 60
     samples = fibonacci_lattice_samples(num_samples, min_inclination)
     print(f'Generated {len(samples)} sample points.')
@@ -274,5 +274,36 @@ if __name__ == '__main__':
     plt.show()
     
     plot_distance_from_rail(350, interpolated_function, samples)
+    
+    # Create an interpolated function from the scattered data using griddata
+    interpolated_function = lambda params: interp.griddata(
+        samples, distance_from_rail_values, params, method='cubic'
+    )
+    
+    # Generate a grid of heading and inclination values
+    heading_values = np.linspace(0, 360, 100)
+    inclination_values = np.linspace(min_inclination, 90, 100)
+    heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)
+    
+    # Define a function to vectorize that reshapes the input correctly
+    def vectorized_interpolated_function(heading, inclination):
+        params = np.array([[inclination, heading]])
+        return interpolated_function(params)[0]
+    
+    # Vectorize the function
+    vec_func = np.vectorize(vectorized_interpolated_function)
+    
+    # Evaluate the vectorized function at each point on the grid
+    grid_values = vec_func(heading_mesh, inclination_mesh)
+    
+    # Plot the interpolated mesh
+    plt.figure(figsize=(10, 8))
+    cp = plt.contourf(heading_mesh, inclination_mesh, grid_values, cmap='viridis')
+    plt.colorbar(cp, label='Distance from Rail (m)')
+    plt.xlabel('Heading (degrees)')
+    plt.ylabel('Inclination (degrees)')
+    plt.title('Interpolated Mesh')
+    plt.grid(True)
+    plt.show()
 
     
