@@ -293,6 +293,7 @@ if __name__ == '__main__':
     # Vectorize the function
     vec_func = np.vectorize(vectorized_interpolated_function)
     
+    
     # Evaluate the vectorized function at each point on the grid
     grid_values = vec_func(heading_mesh, inclination_mesh)
     
