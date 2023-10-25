@@ -191,8 +191,8 @@ import scipy.interpolate as interp
 num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 4)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 4)  # 36 points between 0 and 360
+inclination_values = np.linspace(60, 90, 15)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
@@ -215,7 +215,7 @@ def plot_distance_from_rail(constant_heading, interpolated_function):
 
     for heading in headings:
         # Create arrays to hold the inclination values and corresponding distances
-        inclinations = np.linspace(40, 90, 25)
+        inclinations = np.linspace(60, 90, 25)
         distances = np.empty_like(inclinations)
         
         # Evaluate the interpolated function for each inclination at the current heading
