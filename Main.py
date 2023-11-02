@@ -19,7 +19,7 @@ tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
 # Set the environment's date to tomorrow at 12:00 UTC
 env.set_date(
-    (2023, 10, 28, 12)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
+    (2023, 11, 5, 12)#(2023, 10, 28, 12)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
 )  # Hour given in UTC time
 
 # Set the atmospheric model to be used, based on a forecast file
@@ -275,27 +275,30 @@ if __name__ == '__main__':
     
     plot_distance_from_rail(350, interpolated_function, samples)
     
-    # Create an interpolated function from the scattered data using griddata
-    interpolated_function = lambda params: interp.griddata(
-        samples, distance_from_rail_values, params, method='cubic'
-    )
+    # Duplicate and transform data
+    duplicated_heading_samples = np.mod(samples[:, 1] + 360, 720)
+    duplicated_inclination_samples = 180 - samples[:, 0]
+    merged_samples = np.vstack((
+        np.column_stack((samples[:, 0], duplicated_heading_samples)),
+        np.column_stack((duplicated_inclination_samples, duplicated_heading_samples)),
+    ))
+    merged_distance_from_rail_values = np.tile(distance_from_rail_values, 2)
+    
+    # Create an interpolated function using the merged data
+    interpolated_function = interp.LinearNDInterpolator(merged_samples, merged_distance_from_rail_values, fill_value=np.nan)
+    
+    # Define a function to vectorize
+    def vectorized_interpolated_function(heading, inclination):
+        params = np.column_stack((inclination.ravel(), heading.ravel()))
+        return interpolated_function(params).reshape(heading.shape)
     
     # Generate a grid of heading and inclination values
-    heading_values = np.linspace(0, 360, 100)
-    inclination_values = np.linspace(min_inclination, 90, 100)
+    heading_values = np.linspace(0, 360, 100)  # wrapping around at 360 degrees
+    inclination_values = np.linspace(60, 90, 100)  # restricting to desired range
     heading_mesh, inclination_mesh = np.meshgrid(heading_values, inclination_values)
     
-    # Define a function to vectorize that reshapes the input correctly
-    def vectorized_interpolated_function(heading, inclination):
-        params = np.array([[inclination, heading]])
-        return interpolated_function(params)[0]
-    
-    # Vectorize the function
-    vec_func = np.vectorize(vectorized_interpolated_function)
-    
-    
     # Evaluate the vectorized function at each point on the grid
-    grid_values = vec_func(heading_mesh, inclination_mesh)
+    grid_values = vectorized_interpolated_function(heading_mesh, inclination_mesh)
     
     # Plot the interpolated mesh
     plt.figure(figsize=(10, 8))
@@ -305,6 +308,7 @@ if __name__ == '__main__':
     plt.ylabel('Inclination (degrees)')
     plt.title('Interpolated Mesh')
     plt.grid(True)
+    plt.xlim([0, 360])  # ensuring plot shows the desired range
+    plt.ylim([60, 90])  # ensuring plot shows the desired range
     plt.show()
-
     
