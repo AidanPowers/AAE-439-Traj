@@ -19,7 +19,7 @@ tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
 # Set the environment's date to tomorrow at 12:00 UTC
 env.set_date(
-    (2023, 10, 28, 12)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
+    (2023, 11, 5, 12)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
 )  # Hour given in UTC time
 
 # Set the atmospheric model to be used, based on a forecast file
