@@ -142,7 +142,7 @@ def simulate_flight(params):
     phase1_flight = Flight(
         rocket=loc_iv,
         environment=env,
-        rail_length=5.2,
+        rail_length=1.828,
         inclination=inclination,
         heading=heading,
         #max_time=deploy_charge_time,
