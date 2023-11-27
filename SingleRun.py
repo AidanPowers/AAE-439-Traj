@@ -8,6 +8,8 @@ Created on Mon Oct  9 20:10:11 2023
 import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight, plots
 import netCDF4
+import numpy as np
+
 
 import datetime
 
@@ -55,7 +57,7 @@ DMS_H100W_14A = SolidMotor(
     throat_radius=5 / 2 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
-deploy_charge_time = 15
+deploy_charge_time = 14
 
 
 # Uncomment to print motor information
@@ -98,21 +100,21 @@ fin_set = loc_iv.add_trapezoidal_fins(
 #     top_radius=0.0635, bottom_radius=0.0435, length=0.060, position=-1.194656
 # )
 
-#unused
-def fake_trigger(p, h, y):
-    # activate main when vz < 0 m/s and z < 800 m
-    return True if h > 0 else False
+# #unused
+# def fake_trigger(p, h, y):
+#     # activate main when vz < 0 m/s and z < 800 m
+#     return True if h > 0 else False
 
 
-#adds a zero drag chute to move into the parahute phase
-main = loc_iv.add_parachute(
-    name="false",
-    cd_s=0,
-    trigger="apogee",      # ejection altitude in meters
-    sampling_rate=105,
-    lag=1.5,
-    noise=(0, 8.3, 0.5),
-)
+# #adds a zero drag chute to move into the parahute phase
+# main = loc_iv.add_parachute(
+#     name="false",
+#     cd_s=0,
+#     trigger="apogee",      # ejection altitude in meters
+#     sampling_rate=105,
+#     lag=1.5,
+#     noise=(0, 8.3, 0.5),
+# )
 
 # drogue = loc_iv.add_parachute(
 #     name="drogue",
@@ -124,7 +126,10 @@ main = loc_iv.add_parachute(
 # )
 
 #time of parahute charge (name from old)
-burnout_t = 10
+burnout_t = 14
+inc =80.32
+head = 266.8
+
 
 print(loc_iv.plots.static_margin())
 print(loc_iv.all_info())
@@ -132,7 +137,7 @@ print(loc_iv.draw())
 
 #first flight, result is the same if I run the entire flight, and then pick out a time using the matrix.
 flight_phase1 = Flight(
-    rocket=loc_iv, environment=env, rail_length=5.2, inclination=85, heading=0, max_time_step = .1# , max_time=burnout_t, verbose = True
+    rocket=loc_iv, environment=env, rail_length=1.828, inclination=inc, heading=head, max_time_step = .1# , max_time=burnout_t, verbose = True
     )
 
 print(flight_phase1.all_info())
@@ -157,19 +162,25 @@ main = loc_iv.add_parachute(
     cd_s=0.80,
     trigger=main_trigger,
     sampling_rate=105,
-    lag=0.01, 
+    lag=0, 
     noise=(0, 8.3, 0.5),
 )
 
 #simulate a chute only flight
 flight_phase2 = Flight(
-    rocket=loc_iv, environment=env, rail_length=1.828, inclination=80.32, heading=266.8, initial_solution=initial_solution #,max_time_step = .1
+    rocket=loc_iv, environment=env, rail_length=1.828, inclination=inc, heading=head, initial_solution=initial_solution #,max_time_step = .1
     )
 
 #print(flight_phase2.info())
 
 #flight_phase2.trajectory_3d.plot()
 flight_phase2.plots.trajectory_3d()
+
+launch_position = np.array([0, 0])
+landing_position = np.array([flight_phase2.x_impact, flight_phase2.y_impact])
+distance_from_rail = np.linalg.norm(launch_position - landing_position)
+print(f'Inclination: {inc:.2f}, Heading: {head:.2f}, Distance from Rail: {distance_from_rail:.2f}')
+
 #flight.prints.impact_conditions()
 
 
