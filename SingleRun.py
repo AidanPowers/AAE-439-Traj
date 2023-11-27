@@ -163,7 +163,7 @@ main = loc_iv.add_parachute(
 
 #simulate a chute only flight
 flight_phase2 = Flight(
-    rocket=loc_iv, environment=env, rail_length=5.2, inclination=85, heading=0, initial_solution=initial_solution #,max_time_step = .1
+    rocket=loc_iv, environment=env, rail_length=1.828, inclination=80.32, heading=266.8, initial_solution=initial_solution #,max_time_step = .1
     )
 
 #print(flight_phase2.info())

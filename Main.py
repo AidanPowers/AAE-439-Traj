@@ -23,7 +23,16 @@ env.set_date(
 )  # Hour given in UTC time
 
 # Set the atmospheric model to be used, based on a forecast file
-env.set_atmospheric_model(type="Forecast", file="NAM")
+#env.set_atmospheric_model(type="Forecast", file="NAM")
+env.set_atmospheric_model(
+    type="custom_atmosphere",
+    pressure=None,
+    temperature=300,
+    wind_u=[(0, 10/3.281)],
+    wind_v=[(0, 0)],
+)
+
+
 
 # Uncomment to print environment information
 #print(env.info())
@@ -191,8 +200,8 @@ import scipy.interpolate as interp
 num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(75, 85, 12)  # 25 points between 40 and 90
-heading_values = np.linspace(190, 230, 12)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 12)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 12)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
