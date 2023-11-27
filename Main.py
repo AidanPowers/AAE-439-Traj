@@ -19,11 +19,11 @@ tomorrow = datetime.date.today() + datetime.timedelta(days=1)
 
 # Set the environment's date to tomorrow at 12:00 UTC
 env.set_date(
-    (2023, 11, 5, 1)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
+    (2023, 11, 5, 18)#tomorrow.year, tomorrow.month, tomorrow.day, 12)
 )  # Hour given in UTC time
 
 # Set the atmospheric model to be used, based on a forecast file
-env.set_atmospheric_model(type="Forecast", file="GFS")
+env.set_atmospheric_model(type="Forecast", file="NAM")
 
 # Uncomment to print environment information
 #print(env.info())
@@ -51,7 +51,7 @@ DMS_H100W_14A = SolidMotor(
     throat_radius=5 / 2 / 1000,
     coordinate_system_orientation="nozzle_to_combustion_chamber",
 )
-deploy_charge_time = 15
+deploy_charge_time = 14
 
 
 # Uncomment to print motor information
@@ -191,12 +191,12 @@ import scipy.interpolate as interp
 num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(60, 90, 15)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 36)  # 36 points between 0 and 360
+inclination_values = np.linspace(75, 85, 12)  # 25 points between 40 and 90
+heading_values = np.linspace(190, 230, 12)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
-
+ 
 def evaluate_inclination(inclination):
     # Evaluate the objective function over all heading values for a given inclination
     results = np.empty(len(heading_values))
@@ -215,7 +215,7 @@ def plot_distance_from_rail(constant_heading, interpolated_function):
 
     for heading in headings:
         # Create arrays to hold the inclination values and corresponding distances
-        inclinations = np.linspace(60, 90, 25)
+        inclinations = inclination_values
         distances = np.empty_like(inclinations)
         
         # Evaluate the interpolated function for each inclination at the current heading
@@ -280,5 +280,5 @@ if __name__ == '__main__':
     plt.title('Phase Space Map')
     plt.show()
     
-    plot_distance_from_rail(90, interpolated_function)
+    plot_distance_from_rail(10, interpolated_function)
     
