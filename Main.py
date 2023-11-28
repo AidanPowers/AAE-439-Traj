@@ -201,8 +201,8 @@ import scipy.interpolate as interp
 num_cores = cpu_count() // 2  # Assumes hyper-threading is enabled
 
 # Define the range of values for each parameter
-inclination_values = np.linspace(40, 90, 1)  # 25 points between 40 and 90
-heading_values = np.linspace(0, 360, 1)  # 36 points between 0 and 360
+inclination_values = np.linspace(40, 90, 15)  # 25 points between 40 and 90
+heading_values = np.linspace(0, 360, 15)  # 36 points between 0 and 360
 
 # Create an empty array to hold the objective function values
 distance_from_rail_values = np.empty((len(inclination_values), len(heading_values)))
