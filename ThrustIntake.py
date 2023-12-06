@@ -192,10 +192,39 @@ else:
 # Step 6: Plot the manually aligned curves
 plt.figure(figsize=(10, 6))
 plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
-plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Manually Aligned)')
-plt.title("Averaged and Reference Thrust Curve (Manual Alignment)")
+plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve')
+plt.title("Averaged and Reference Thrust Curve")
 plt.xlabel("Time (seconds)")
 plt.ylabel("Thrust (N)")
 plt.legend()
 plt.grid(True)
 plt.show()
+
+from scipy.integrate import simps
+
+# Constants
+time_step = time_values[1] - time_values[0]  # This assumes evenly spaced time values
+
+# Define a threshold for considering when the thrust is active
+thrust_threshold = 1  # Change this value as needed for your data
+
+# Calculate statistics for the averaged curve
+peak_thrust_averaged = np.max(averaged_curve)
+above_threshold_averaged = averaged_curve > thrust_threshold
+time_of_thrust_averaged = np.sum(above_threshold_averaged) * time_step
+impulse_averaged = simps(averaged_curve, dx=time_step)
+
+# Calculate statistics for the reference curve
+peak_thrust_reference = np.max(ref_thrust_interpolated)
+above_threshold_reference = ref_thrust_interpolated > thrust_threshold
+time_of_thrust_reference = np.sum(above_threshold_reference) * time_step
+impulse_reference = simps(ref_thrust_interpolated, dx=time_step)
+
+# Output the statistics
+print(f"Averaged Curve Peak Thrust: {peak_thrust_averaged:.2f} lbf")
+print(f"Averaged Curve Time of Thrust: {time_of_thrust_averaged:.2f} seconds")
+print(f"Averaged Curve Impulse: {impulse_averaged:.2f} Lbf*s")
+
+print(f"Reference Curve Peak Thrust: {peak_thrust_reference:.2f} lbf")
+print(f"Reference Curve Time of Thrust: {time_of_thrust_reference:.2f} seconds")
+print(f"Reference Curve Impulse: {impulse_reference:.2f} Lbf*s")
