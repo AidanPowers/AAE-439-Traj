@@ -158,6 +158,8 @@ np.savetxt('DMS_H100W_14A.csv', export_data, delimiter=',')
 
 print(f"Trimmed and exported curve from {trimmed_time_values[0]:.2f}s to {trimmed_time_values[-1]:.2f}s.")
 
+from scipy.interpolate import interp1d
+from scipy.signal import correlate
 
 # Constants
 LB_TO_N = 4.44822  # Conversion factor from lbf to Newtons
@@ -165,45 +167,33 @@ LB_TO_N = 4.44822  # Conversion factor from lbf to Newtons
 # Convert the reference curve from Newtons to lbf, if necessary
 ref_thrust_curve[:, 1] /= LB_TO_N
 
-# Time alignment and interpolation
-# Find the time range common to both the reference curve and the measured curves
-common_time_start = max(ref_thrust_curve[0, 0], time_values[0])
-common_time_end = min(ref_thrust_curve[-1, 0], time_values[-1])
-common_time_values = np.linspace(common_time_start, common_time_end, num_samples)
-
-# Interpolate the reference curve to match the common time values
-from scipy.interpolate import interp1d
-
-# Create an interpolation function for the reference curve
+# Step 1: Resample the reference curve to match the time intervals of the averaged curve
+# We assume the ref_thrust_curve[:, 0] is the time and ref_thrust_curve[:, 1] is the thrust
 ref_interp_func = interp1d(ref_thrust_curve[:, 0], ref_thrust_curve[:, 1], kind='linear', bounds_error=False, fill_value='extrapolate')
+ref_thrust_interpolated = ref_interp_func(time_values)
 
-# Use the interpolation function to get thrust values at common time points
-ref_thrust_interpolated = ref_interp_func(common_time_values)
+# Step 2: Find the peak of the averaged curve
+peak_index_averaged = np.argmax(averaged_curve)
 
-# Plotting All Curves, Averaged Curve, and Reference Curve
+# Step 3: Find the peak of the reference curve
+peak_index_reference = np.argmax(ref_thrust_interpolated)
+
+# Step 4: Calculate the shift required to align the peaks
+required_shift = peak_index_averaged - peak_index_reference
+
+# Step 5: Apply the shift
+# Shift the reference curve's thrust values to align the peaks
+# Note: This assumes that the peak should be shifted to the right; if it needs to be shifted to the left, the sign should be reversed
+if required_shift > 0:
+    ref_thrust_aligned = np.concatenate((np.full(required_shift, np.nan), ref_thrust_interpolated[:-required_shift]))
+else:
+    ref_thrust_aligned = np.concatenate((ref_thrust_interpolated[-required_shift:], np.full(-required_shift, np.nan)))
+
+# Step 6: Plot the manually aligned curves
 plt.figure(figsize=(10, 6))
-
-# Plotting existing thrust curves
-for i, thrust_data in enumerate(thrust_curves):
-    plt.plot(time_values, thrust_data, alpha=0.4, label=f'Group {i+1}')
-
-# Plotting the averaged curve
-plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve (Aligned)')
-
-# Interpolated reference thrust values
-ref_thrust_interpolated = ref_interp_func(common_time_values)
-
-# You don't need to separate time and thrust values for the reference curve as
-# the time values are in common_time_values and thrust values in ref_thrust_interpolated
-
-# Plotting the reference curve
-plt.plot(common_time_values, ref_thrust_interpolated, color='red', linewidth=2, label='Reference Curve')
-
-# The rest of your plotting code remains the same
-
-
-# Additional plot settings
-plt.title("All Thrust Curves with Aligned, Averaged, and Reference Curve")
+plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
+plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Manually Aligned)')
+plt.title("Averaged and Reference Thrust Curve (Manual Alignment)")
 plt.xlabel("Time (seconds)")
 plt.ylabel("Thrust (N)")
 plt.legend()
