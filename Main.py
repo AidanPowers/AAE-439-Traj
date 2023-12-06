@@ -46,7 +46,7 @@ DMS_H100W_14A = SolidMotor(
     #thrust_source=120,
     dry_mass=.154,
     #dry_inertia=(0.0125, 0.0125, 0.0002),
-    dry_inertia=(0.0, 0.0, 0.0),
+    dry_inertia=(0.0001, 0.0001, 0.0001),
     nozzle_radius=10.5 / 2 / 1000,
     grain_number=1,
     grain_density=1820.26,
@@ -188,8 +188,8 @@ def simulate_flight(params):
     distance_from_rail = np.linalg.norm(launch_position - landing_position)
     
     print(f'Inclination: {inclination:.2f}, Heading: {heading:.2f}, Distance from Rail: {distance_from_rail:.2f}')
-    phase1_flight.plots.trajectory_3d()
-    test_flight.plots.trajectory_3d()
+    #phase1_flight.plots.trajectory_3d()
+    #test_flight.plots.trajectory_3d()
     return distance_from_rail
 
 

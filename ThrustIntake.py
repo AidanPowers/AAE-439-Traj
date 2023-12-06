@@ -1,6 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# File name of the reference thrust curve
+file_name_ref = 'Thrusts\\AeroTech_H100W_DMS.eng'
+
+# Custom function to load the reference thrust curve file
+def load_custom_format(file_name):
+    data = []
+    with open(file_name, 'r') as file:
+        for line in file:
+            stripped_line = line.strip()
+            if stripped_line:  # Only process non-empty lines
+                # Splitting the line by spaces and converting to float
+                time, thrust = map(float, stripped_line.split())
+                data.append([time, thrust])
+    return np.array(data)
+
+# Load the file using the custom function
+ref_thrust_curve = load_custom_format(file_name_ref)
+
 # Number of groups and samples
 num_groups = 10
 num_samples = 10000
@@ -133,8 +151,61 @@ trimmed_curve_newtons = trimmed_curve * LB_TO_N
 # Adjust the trimmed time values so that they start from zero
 trimmed_time_values = trimmed_time_values - trimmed_time_values[0]
 
+
 # Export to CSV
 export_data = np.column_stack((trimmed_time_values, trimmed_curve_newtons))
 np.savetxt('DMS_H100W_14A.csv', export_data, delimiter=',')
 
 print(f"Trimmed and exported curve from {trimmed_time_values[0]:.2f}s to {trimmed_time_values[-1]:.2f}s.")
+
+
+# Constants
+LB_TO_N = 4.44822  # Conversion factor from lbf to Newtons
+
+# Convert the reference curve from Newtons to lbf, if necessary
+ref_thrust_curve[:, 1] /= LB_TO_N
+
+# Time alignment and interpolation
+# Find the time range common to both the reference curve and the measured curves
+common_time_start = max(ref_thrust_curve[0, 0], time_values[0])
+common_time_end = min(ref_thrust_curve[-1, 0], time_values[-1])
+common_time_values = np.linspace(common_time_start, common_time_end, num_samples)
+
+# Interpolate the reference curve to match the common time values
+from scipy.interpolate import interp1d
+
+# Create an interpolation function for the reference curve
+ref_interp_func = interp1d(ref_thrust_curve[:, 0], ref_thrust_curve[:, 1], kind='linear', bounds_error=False, fill_value='extrapolate')
+
+# Use the interpolation function to get thrust values at common time points
+ref_thrust_interpolated = ref_interp_func(common_time_values)
+
+# Plotting All Curves, Averaged Curve, and Reference Curve
+plt.figure(figsize=(10, 6))
+
+# Plotting existing thrust curves
+for i, thrust_data in enumerate(thrust_curves):
+    plt.plot(time_values, thrust_data, alpha=0.4, label=f'Group {i+1}')
+
+# Plotting the averaged curve
+plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve (Aligned)')
+
+# Interpolated reference thrust values
+ref_thrust_interpolated = ref_interp_func(common_time_values)
+
+# You don't need to separate time and thrust values for the reference curve as
+# the time values are in common_time_values and thrust values in ref_thrust_interpolated
+
+# Plotting the reference curve
+plt.plot(common_time_values, ref_thrust_interpolated, color='red', linewidth=2, label='Reference Curve')
+
+# The rest of your plotting code remains the same
+
+
+# Additional plot settings
+plt.title("All Thrust Curves with Aligned, Averaged, and Reference Curve")
+plt.xlabel("Time (seconds)")
+plt.ylabel("Thrust (N)")
+plt.legend()
+plt.grid(True)
+plt.show()
