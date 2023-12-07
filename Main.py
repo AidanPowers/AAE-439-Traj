@@ -45,8 +45,8 @@ DMS_H100W_14A = SolidMotor(
     thrust_source=fileLoc + "/DMS_H100W_14A.csv",
     #thrust_source=120,
     dry_mass=.154,
-    #dry_inertia=(0.0125, 0.0125, 0.0002),
-    dry_inertia=(0.0, 0.0, 0.0),
+    dry_inertia=(0.0125, 0.0125, 0.0002),
+    #dry_inertia=(0.0001, 0.0001, 0.0001),
     nozzle_radius=10.5 / 2 / 1000,
     grain_number=1,
     grain_density=1820.26,
@@ -71,8 +71,8 @@ deploy_charge_time = 14
 loc_iv = Rocket(
     radius=10.2/100/2,
     mass=1.022,
-    #inertia=(.11675, .11675, .0028950),
-    inertia=(0, 0, 0),
+    inertia=(.11675, .11675, .0028950),
+    #inertia=(0.0001, 0.0001, 0.0001),
     power_off_drag=fileLoc + "//PowerOff.csv",
     power_on_drag=fileLoc + "//PowerOn.csv",
     center_of_mass_without_motor=0.76,
@@ -188,8 +188,8 @@ def simulate_flight(params):
     distance_from_rail = np.linalg.norm(launch_position - landing_position)
     
     print(f'Inclination: {inclination:.2f}, Heading: {heading:.2f}, Distance from Rail: {distance_from_rail:.2f}')
-    phase1_flight.plots.trajectory_3d()
-    test_flight.plots.trajectory_3d()
+    #phase1_flight.plots.trajectory_3d()
+    #test_flight.plots.trajectory_3d()
     return distance_from_rail
 
 
@@ -220,8 +220,9 @@ def evaluate_inclination(inclination):
 def plot_distance_from_rail(constant_heading, interpolated_function):
     # Ensure headings wrap around at 0 and 360 degrees
     headings = [(constant_heading + 360) % 360, 
-                (constant_heading + 5 + 360) % 360, 
-                (constant_heading - 5 + 360) % 360]
+                (constant_heading + 25 + 360) % 360, 
+                (constant_heading - 25 + 360) % 360]
+    headings = np.linspace(0, 360, 9)
 
     plt.figure(figsize=(10, 8))
 
@@ -240,7 +241,7 @@ def plot_distance_from_rail(constant_heading, interpolated_function):
     
     plt.xlabel('Inclination (degrees)')
     plt.ylabel('Distance from Rail (m)')
-    plt.title(f'Distance from Rail at Heading {constant_heading}° and ±5°')
+    plt.title(f'Distance from Rail at Constant Headings')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -292,7 +293,7 @@ if __name__ == '__main__':
     plt.title('Phase Space Map')
     plt.show()
     
-    plot_distance_from_rail(10, interpolated_function)
+    plot_distance_from_rail(270, interpolated_function)
     
     
     
