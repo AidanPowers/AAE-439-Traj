@@ -158,67 +158,68 @@ np.savetxt('DMS_H100W_14A.csv', export_data, delimiter=',')
 
 print(f"Trimmed and exported curve from {trimmed_time_values[0]:.2f}s to {trimmed_time_values[-1]:.2f}s.")
 
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.signal import correlate
+from scipy.integrate import simps
+
+# Load the digitized curve
+digitized_curve = np.loadtxt('Thrusts\\Digitized.csv', delimiter=',', skiprows=1)  # Adjust the path as necessary
 
 # Constants
 LB_TO_N = 4.44822  # Conversion factor from lbf to Newtons
+time_step = time_values[1] - time_values[0]  # This assumes evenly spaced time values
+thrust_threshold = 1  # Threshold for when the thrust is active
 
 # Convert the reference curve from Newtons to lbf, if necessary
 ref_thrust_curve[:, 1] /= LB_TO_N
 
-# Step 1: Resample the reference curve to match the time intervals of the averaged curve
-# We assume the ref_thrust_curve[:, 0] is the time and ref_thrust_curve[:, 1] is the thrust
-ref_interp_func = interp1d(ref_thrust_curve[:, 0], ref_thrust_curve[:, 1], kind='linear', bounds_error=False, fill_value='extrapolate')
+# Interpolate the reference curve to match the time intervals of the averaged curve
+ref_interp_func = interp1d(ref_thrust_curve[:, 0], ref_thrust_curve[:, 1], kind='linear', fill_value='extrapolate', bounds_error=False)
 ref_thrust_interpolated = ref_interp_func(time_values)
 
-# Step 2: Find the peak of the averaged curve
+# Interpolate the digitized curve to match the time intervals of the averaged curve
+digitized_interp_func = interp1d(digitized_curve[:, 0], digitized_curve[:, 1], kind='linear', fill_value='extrapolate', bounds_error=False)
+digitized_interpolated = digitized_interp_func(time_values)
+
+# Calculate the shift required to align the peaks of the reference curve
 peak_index_averaged = np.argmax(averaged_curve)
-
-# Step 3: Find the peak of the reference curve
 peak_index_reference = np.argmax(ref_thrust_interpolated)
-
-# Step 4: Calculate the shift required to align the peaks
 required_shift = peak_index_averaged - peak_index_reference
 
-# Step 5: Apply the shift
-# Shift the reference curve's thrust values to align the peaks
-# Note: This assumes that the peak should be shifted to the right; if it needs to be shifted to the left, the sign should be reversed
+# Apply the shift to the reference curve's thrust values to align the peaks
 if required_shift > 0:
     ref_thrust_aligned = np.concatenate((np.full(required_shift, np.nan), ref_thrust_interpolated[:-required_shift]))
 else:
     ref_thrust_aligned = np.concatenate((ref_thrust_interpolated[-required_shift:], np.full(-required_shift, np.nan)))
 
-# Step 6: Plot the manually aligned curves
-plt.figure(figsize=(10, 6))
-plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
-plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve')
-plt.title("Averaged and Reference Thrust Curve")
-plt.xlabel("Time (seconds)")
-plt.ylabel("Thrust (N)")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-from scipy.integrate import simps
-
-# Constants
-time_step = time_values[1] - time_values[0]  # This assumes evenly spaced time values
-
-# Define a threshold for considering when the thrust is active
-thrust_threshold = 1  # Change this value as needed for your data
-
 # Calculate statistics for the averaged curve
 peak_thrust_averaged = np.max(averaged_curve)
-above_threshold_averaged = averaged_curve > thrust_threshold
-time_of_thrust_averaged = np.sum(above_threshold_averaged) * time_step
+time_of_thrust_averaged = np.sum(averaged_curve > thrust_threshold) * time_step
 impulse_averaged = simps(averaged_curve, dx=time_step)
 
 # Calculate statistics for the reference curve
 peak_thrust_reference = np.max(ref_thrust_interpolated)
-above_threshold_reference = ref_thrust_interpolated > thrust_threshold
-time_of_thrust_reference = np.sum(above_threshold_reference) * time_step
+time_of_thrust_reference = np.sum(ref_thrust_interpolated > thrust_threshold) * time_step
 impulse_reference = simps(ref_thrust_interpolated, dx=time_step)
+
+# Calculate statistics for the digitized curve
+peak_thrust_digitized = np.max(digitized_interpolated)
+time_of_thrust_digitized = np.sum(digitized_interpolated > thrust_threshold) * time_step
+impulse_digitized = simps(digitized_interpolated, dx=time_step)
+
+# Plot the curves
+plt.figure(figsize=(10, 6))
+plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
+plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Aligned)')
+plt.plot(time_values, digitized_interpolated, color='blue', linewidth=2, label='Digitized Curve')
+plt.title("Thrust Curve Comparison")
+plt.xlabel("Time (seconds)")
+plt.ylabel("Thrust (lbf)")
+plt.legend()
+plt.grid(True)
+plt.show()
 
 # Output the statistics
 print(f"Averaged Curve Peak Thrust: {peak_thrust_averaged:.2f} lbf")
@@ -228,3 +229,7 @@ print(f"Averaged Curve Impulse: {impulse_averaged:.2f} Lbf*s")
 print(f"Reference Curve Peak Thrust: {peak_thrust_reference:.2f} lbf")
 print(f"Reference Curve Time of Thrust: {time_of_thrust_reference:.2f} seconds")
 print(f"Reference Curve Impulse: {impulse_reference:.2f} Lbf*s")
+
+print(f"Digitized Curve Peak Thrust: {peak_thrust_digitized:.2f} lbf")
+print(f"Digitized Curve Time of Thrust: {time_of_thrust_digitized:.2f} seconds")
+print(f"Digitized Curve Impulse: {impulse_digitized:.2f} Lbf*s")
