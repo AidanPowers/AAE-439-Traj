@@ -9,10 +9,25 @@ import pathlib
 from rocketpy import Environment, SolidMotor, Rocket, Flight, plots
 import netCDF4
 import numpy as np
-
-
 import datetime
 
+
+
+
+HIRESW_dictionary = {
+    "time": "time",
+    "latitude": "lat",
+    "longitude": "lon",
+    "level": "lev",
+    "temperature": "tmpprs",
+    "surface_geopotential_height": "hgtsfc",
+    "geopotential_height": "hgtprs",
+    "u_wind": "ugrdprs",
+    "v_wind": "vgrdprs",
+}
+
+date_info = (2023, 11, 5, 18)
+date_string = f"{date_info[0]}{date_info[1]:02}{date_info[2]:02}"
 
 env = Environment(latitude=40.4237, longitude=-86.9212, elevation=190)
 
@@ -22,15 +37,55 @@ env.set_date(
     (2023, 11, 5, 18)
 )  # Hour given in UTC time
 
-#env.set_atmospheric_model(type="Forecast", file="RAP")
+# env.set_atmospheric_model(type="Forecast", file="RAP")
 
-env.set_atmospheric_model(
-    type="custom_atmosphere",
-    pressure=None,
-    temperature=300,
-    wind_u=[(0, 10/3.281)],
-    wind_v=[(0, 0)],
-)
+# env.set_atmospheric_model(
+#     type="Forecast",
+#     file=f"https://nomads.ncep.noaa.gov/dods/hiresw/hiresw{date_string}/hiresw_conusarw_12z",
+#     dictionary=HIRESW_dictionary,
+# )
+
+# env.set_atmospheric_model(
+#     type="custom_atmosphere",
+#     pressure=None,
+#     temperature=300,
+#     wind_u=[(0, 10/3.281)],
+#     wind_v=[(0, 0)],
+# )
+
+## Grib re-analysis
+# conda install -c conda-forge cfgrib
+import cfgrib
+import numpy as np
+from rocketpy import Environment
+
+# Open GRIB file
+ds = cfgrib.open_datasets('Forecasts\\rap_130_20231105_1800_000.grb2')
+
+# Extract data - modify keys as per your GRIB file structure
+temperature = ds[0].tmpprs.values
+pressure = ds[0].prmsl.values
+u_wind = ds[0].ugrdprs.values
+v_wind = ds[0].vgrdprs.values
+
+# Calculate wind speed and direction
+wind_speed = np.sqrt(u_wind**2 + v_wind**2)
+wind_direction = np.arctan2(u_wind, v_wind) * 180 / np.pi
+
+# Format data for RocketPy - assuming altitude is an array of altitudes
+# You might need to interpolate your data to match these altitudes
+formatted_temperature = np.interp(altitude, pressure, temperature)
+formatted_wind_speed = np.interp(altitude, pressure, wind_speed)
+formatted_wind_direction = np.interp(altitude, pressure, wind_direction)
+
+# Set up RocketPy environment
+env = Environment()
+env.set_atmospheric_model(type='Tabular', 
+                          altitude=altitude, 
+                          temperature=formatted_temperature, 
+                          pressure=pressure, 
+                          wind_speed=formatted_wind_speed, 
+                          wind_direction=formatted_wind_direction)
 
 
 print(env.info())
