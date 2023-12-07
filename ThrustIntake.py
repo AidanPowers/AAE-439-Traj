@@ -158,6 +158,11 @@ np.savetxt('DMS_H100W_14A.csv', export_data, delimiter=',')
 
 print(f"Trimmed and exported curve from {trimmed_time_values[0]:.2f}s to {trimmed_time_values[-1]:.2f}s.")
 
+
+## Curve comparison
+# Averaged is from our testing
+# Refernce is from https://web.archive.org/web/https://www.thrustcurve.org/motors/AeroTech/H100W_DMS/
+# digitized is from the https://web.archive.org/web/*/https://aerotech-rocketry.com/products/product_f89c2d4d-4c3c-9a99-bfd8-b2d0b1dcef8a
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
@@ -224,9 +229,9 @@ impulse_digitized = simps(digitized_interpolated, dx=time_step)
 # Plot the curves
 plt.figure(figsize=(10, 6))
 plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
-plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Aligned)')
-plt.plot(time_values, digitized_aligned, color='blue', linewidth=2, label='Digitized Curve (Aligned)')
-plt.title("Thrust Curve Comparison")
+plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Peak Aligned)')
+plt.plot(time_values, digitized_aligned, color='blue', linewidth=2, label='Digitized Curve (Peak Aligned)')
+plt.title("DMS H100W 14A Thrust Curve Comparison")
 plt.xlabel("Time (seconds)")
 plt.ylabel("Thrust (lbf)")
 plt.legend()
