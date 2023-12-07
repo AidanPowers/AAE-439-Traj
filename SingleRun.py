@@ -54,6 +54,7 @@ env.set_date(
 # )
 
 ## Grib re-analysis
+# https://www.ncei.noaa.gov/data/rapid-refresh/access/rap-130-13km/analysis/202311/20231105/
 # conda install -c conda-forge cfgrib
 import cfgrib
 import numpy as np
@@ -90,6 +91,7 @@ env.set_atmospheric_model(type='Tabular',
 
 print(env.info())
 
+    
 fileLoc = str(pathlib.Path().resolve())
 
 # Create a solid motor object with specified properties and data file
