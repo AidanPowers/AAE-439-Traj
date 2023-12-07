@@ -172,19 +172,17 @@ LB_TO_N = 4.44822  # Conversion factor from lbf to Newtons
 time_step = time_values[1] - time_values[0]  # This assumes evenly spaced time values
 thrust_threshold = 1  # Threshold for when the thrust is active
 
-# Convert the reference curve from Newtons to lbf, if necessary
+# Convert the reference curve from Newtons to lbf
 ref_thrust_curve[:, 1] /= LB_TO_N
+
+# Find the peak of the averaged curve
+peak_index_averaged = np.argmax(averaged_curve)
 
 # Interpolate the reference curve to match the time intervals of the averaged curve
 ref_interp_func = interp1d(ref_thrust_curve[:, 0], ref_thrust_curve[:, 1], kind='linear', fill_value='extrapolate', bounds_error=False)
 ref_thrust_interpolated = ref_interp_func(time_values)
 
-# Interpolate the digitized curve to match the time intervals of the averaged curve
-digitized_interp_func = interp1d(digitized_curve[:, 0], digitized_curve[:, 1], kind='linear', fill_value='extrapolate', bounds_error=False)
-digitized_interpolated = digitized_interp_func(time_values)
-
 # Calculate the shift required to align the peaks of the reference curve
-peak_index_averaged = np.argmax(averaged_curve)
 peak_index_reference = np.argmax(ref_thrust_interpolated)
 required_shift = peak_index_averaged - peak_index_reference
 
@@ -193,6 +191,20 @@ if required_shift > 0:
     ref_thrust_aligned = np.concatenate((np.full(required_shift, np.nan), ref_thrust_interpolated[:-required_shift]))
 else:
     ref_thrust_aligned = np.concatenate((ref_thrust_interpolated[-required_shift:], np.full(-required_shift, np.nan)))
+
+# Interpolate the digitized curve to match the time intervals of the averaged curve
+digitized_interp_func = interp1d(digitized_curve[:, 0], digitized_curve[:, 1], kind='linear', fill_value='extrapolate', bounds_error=False)
+digitized_interpolated = digitized_interp_func(time_values)
+
+# Calculate the shift required to align the peaks of the digitized curve
+peak_index_digitized = np.argmax(digitized_interpolated)
+required_shift_digitized = peak_index_averaged - peak_index_digitized
+
+# Apply the shift to the digitized curve's thrust values to align the peaks
+if required_shift_digitized > 0:
+    digitized_aligned = np.concatenate((np.full(required_shift_digitized, np.nan), digitized_interpolated[:-required_shift_digitized]))
+else:
+    digitized_aligned = np.concatenate((digitized_interpolated[-required_shift_digitized:], np.full(-required_shift_digitized, np.nan)))
 
 # Calculate statistics for the averaged curve
 peak_thrust_averaged = np.max(averaged_curve)
@@ -213,7 +225,7 @@ impulse_digitized = simps(digitized_interpolated, dx=time_step)
 plt.figure(figsize=(10, 6))
 plt.plot(time_values, averaged_curve, color='black', linewidth=2, label='Averaged Curve')
 plt.plot(time_values, ref_thrust_aligned, color='red', linewidth=2, label='Reference Curve (Aligned)')
-plt.plot(time_values, digitized_interpolated, color='blue', linewidth=2, label='Digitized Curve')
+plt.plot(time_values, digitized_aligned, color='blue', linewidth=2, label='Digitized Curve (Aligned)')
 plt.title("Thrust Curve Comparison")
 plt.xlabel("Time (seconds)")
 plt.ylabel("Thrust (lbf)")
